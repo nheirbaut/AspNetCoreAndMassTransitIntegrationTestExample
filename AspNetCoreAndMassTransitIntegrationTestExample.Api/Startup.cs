@@ -11,28 +11,34 @@ namespace AspNetCoreAndMassTransitIntegrationTestExample.Api
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Configuration = configuration;
+            Environment = environment;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment Environment { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
 
             services.AddControllers();
 
-            services.AddMassTransit(x =>
+            if (Environment.EnvironmentName != "InMemoryTesting")
             {
-                x.AddConsumer<MessageConsumer>();
-
-                x.UsingInMemory((context, cfg) =>
+                services.AddMassTransit(x =>
                 {
-                    cfg.ConfigureEndpoints(context);
+                    x.AddConsumer<MessageConsumer>();
+
+                    x.UsingInMemory((context, cfg) =>
+                    {
+                        cfg.ConfigureEndpoints(context);
+                    });
                 });
-            });
-            services.AddMassTransitHostedService(true);
+
+                services.AddMassTransitHostedService(true);
+            }
 
             services.AddSwaggerGen(c =>
             {
